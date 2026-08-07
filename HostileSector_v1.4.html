@@ -8541,6 +8541,71 @@ RR.Game = (function () {
     const md = st && st.map && st.map.def;
     return (md && md.horde) ? Object.assign({}, h, md.horde) : h;
   }
+  /* --------------------------------------------------- horde spawn choice ---
+   * Zombies used to come from exactly ONE place. farFrom() returns the single
+   * spawn point furthest from the player, and it was called fresh for every
+   * zombie with the player standing still — so on a map with a dozen Z markers
+   * all of them walked out of the same doorway and queued up nose to tail.
+   * Measured on the shipped maps: 40 spawns, 1 cell, 39 of them back to back.
+   * That reads as a single-file line, not a horde.
+   *
+   * Now the eligible markers are grouped into compass sectors around the
+   * player, the least-used direction wins, and inside it the least-used marker
+   * wins. Consecutive zombies therefore arrive from different sides of the
+   * map. Each one is also nudged off the exact marker, so two coming through
+   * the same doorway arrive shoulder to shoulder rather than in a queue.
+   * -------------------------------------------------------------------- */
+  const HORDE_DIRS = 6;
+  function pickHordeSpawn(st, pts) {
+    const map = st.map, p = st.player;
+    if (!pts || !pts.length) return W.anyOpenCell(map);
+    if (!st._dirUse || st._dirUse.length !== HORDE_DIRS) st._dirUse = new Array(HORDE_DIRS).fill(0);
+    if (!st._ptUse) st._ptUse = Object.create(null);
+
+    const cand = [];
+    for (let i = 0; i < pts.length; i++) {
+      const q = pts[i];
+      if (!q || !W.canStand(map, q[0], q[1], 0.3)) continue;
+      const dx = q[0] - p.x, dy = q[1] - p.y;
+      const d = Math.hypot(dx, dy);
+      const dir = ((Math.floor(((Math.atan2(dy, dx) + Math.PI) / (Math.PI * 2)) * HORDE_DIRS) % HORDE_DIRS) + HORDE_DIRS) % HORDE_DIRS;
+      cand.push({ q, i, d, dir });
+    }
+    if (!cand.length) return W.anyOpenCell(map);
+
+    /* never materialise on top of the player; on a cramped map fall back to
+       the further half rather than refusing to spawn at all */
+    let pool = cand.filter((c) => c.d >= 5.5);
+    if (!pool.length) {
+      cand.sort((a, b) => b.d - a.d);
+      pool = cand.slice(0, Math.max(1, Math.ceil(cand.length / 2)));
+    }
+
+    /* least-used direction, then least-used marker within it. The random
+       tie-break keeps it from becoming a rigid rotation. */
+    const dirs = {};
+    for (const c of pool) dirs[c.dir] = 1;
+    let bestDir = pool[0].dir, bestDirScore = Infinity;
+    for (const k in dirs) {
+      const score = (st._dirUse[+k] || 0) + Math.random() * 0.85;
+      if (score < bestDirScore) { bestDirScore = score; bestDir = +k; }
+    }
+    const inDir = pool.filter((c) => c.dir === bestDir);
+    let best = inDir[0], bestScore = Infinity;
+    for (const c of inDir) {
+      const score = (st._ptUse[c.i] || 0) + Math.random() * 0.85;
+      if (score < bestScore) { bestScore = score; best = c; }
+    }
+    if (!best) best = pool[Math.floor(Math.random() * pool.length)];
+    st._dirUse[best.dir]++;
+    st._ptUse[best.i] = (st._ptUse[best.i] || 0) + 1;
+
+    /* step off the marker itself so a shared doorway does not stack them */
+    const jx = best.q[0] + (Math.random() - 0.5) * 1.8;
+    const jy = best.q[1] + (Math.random() - 0.5) * 1.8;
+    return W.nearestStandable(map, jx, jy, 0.3) || best.q;
+  }
+
   function hordeTick(st, dt) {
     const h = hordeCfg(st);
     const cap = h.capRound || 30;
@@ -8555,6 +8620,9 @@ RR.Game = (function () {
         st.dmgScale = 1 + (r - 1) * (h.dmgPerRound || 0.045);
         st.spawnQueue = (h.baseCount || 6) + (st.round - 1) * (h.perRound || 3);
         st.roundTotal = st.spawnQueue;
+        /* every round starts the direction rotation fresh, so no single side
+           is favoured just because it was quiet last round */
+        st._dirUse = null; st._ptUse = null;
         st.roundState = "fight"; st.spawnTimer = 0;
         C.giveAmmoAll(st.player, h.ammoRefillFrac || 0.4);
         RR.Audio.play("round_start");
@@ -8567,16 +8635,29 @@ RR.Game = (function () {
     const maxAlive = h.maxAlive || 16;
     st.spawnTimer -= dt;
     if (st.spawnQueue > 0 && alive < maxAlive && st.spawnTimer <= 0) {
-      st.spawnTimer = h.spawnEvery == null ? 0.45 : h.spawnEvery;
+      /* Stagger the interval. A fixed cadence plus a fixed doorway is what
+         made them arrive evenly spaced in a line. */
+      const every = h.spawnEvery == null ? 0.45 : h.spawnEvery;
+      st.spawnTimer = every * (0.6 + Math.random() * 0.85);
       const mixList = (h.unlock || [{ round: 1, mix: ["shambler"] }]);
       let mix = mixList[0].mix;
       for (const u of mixList) if (st.round >= u.round) mix = u.mix;
       const pts = st.map.spawns.zombie.length ? st.map.spawns.zombie : st.map.spawns.enemy;
-      const pt = W.farFrom(st.map, pts.length ? pts : [W.anyOpenCell(st.map)], [st.player], 6) || W.anyOpenCell(st.map);
-      /* horde waves are undead by definition — a mistyped id must not put a
-         rifleman in a zombie round */
-      const e = C.makeEnemy(st, mix[Math.floor(Math.random() * mix.length)], pt[0], pt[1], 1, "undead");
-      if (e) { st.actors.push(e); st.spawnQueue--; }
+      /* When there is a big queue and room on the floor, release a couple at
+         once — the picker gives them different directions, so they come at you
+         from two sides instead of one after another. */
+      let burst = 1;
+      if (st.spawnQueue >= 6 && alive < maxAlive * 0.6) burst = 2;
+      if (st.spawnQueue >= 14 && alive < maxAlive * 0.4) burst = 3;
+      for (let n = 0; n < burst; n++) {
+        if (st.spawnQueue <= 0 || aliveEnemies(st) >= maxAlive) break;
+        const pt = pickHordeSpawn(st, pts.length ? pts : [W.anyOpenCell(st.map)]) || W.anyOpenCell(st.map);
+        if (!pt) break;
+        /* horde waves are undead by definition — a mistyped id must not put a
+           rifleman in a zombie round */
+        const e = C.makeEnemy(st, mix[Math.floor(Math.random() * mix.length)], pt[0], pt[1], 1, "undead");
+        if (e) { st.actors.push(e); st.spawnQueue--; }
+      }
     }
     st.objectiveText = "ROUND " + st.round;
     if (st.spawnQueue <= 0 && alive === 0) {
@@ -12207,6 +12288,85 @@ RR.Tests = (function () {
     });
 
     /* ------------------------------------------------------------ horde */
+    t("zombies come from several directions, not one doorway in single file", () => {
+      /* The bug: farFrom() returns the SINGLE furthest spawn marker, and it
+         was consulted afresh for every zombie while the player stood still.
+         Measured on the shipped maps before the fix: 40 spawns, 1 cell, 39 of
+         them back to back. A queue, not a horde. */
+      const report = [];
+      for (const mapId of ["core:h1", "core:h3", "core:h5"]) {
+        const S = RR.Game.start({ mode: "horde", mapId });
+        RR.Game.S = S; RR.mode = "play"; RR.paused = false;
+        const markers = S.map.spawns.zombie.length;
+        assert(markers >= 6, mapId + " only has " + markers + " zombie markers");
+        const seen = [];
+        let guard = 0;
+        while (seen.length < 30 && guard++ < 6000) {
+          const before = S.actors.filter((a) => a.isEnemy).length;
+          RR.Game.tick(1 / 60);
+          const now = S.actors.filter((a) => a.isEnemy);
+          if (now.length > before) {
+            const e = now[now.length - 1];
+            seen.push([e.x, e.y]);
+            /* keep clearing so the queue keeps releasing */
+            for (const a of S.actors) if (a.isEnemy && !a.dead) RR.Combat.kill(S, a, S.player);
+          }
+        }
+        assert(seen.length >= 20, mapId + " only produced " + seen.length + " spawns to sample");
+        const cells = {};
+        for (const q of seen) cells[Math.round(q[0]) + "," + Math.round(q[1])] = 1;
+        const distinct = Object.keys(cells).length;
+        /* compass sectors around the map centre */
+        const cx = S.map.w / 2, cy = S.map.h / 2, sect = {};
+        for (const q of seen) sect[Math.floor(((Math.atan2(q[1] - cy, q[0] - cx) + Math.PI) / (Math.PI * 2)) * 8) % 8] = 1;
+        const sectors = Object.keys(sect).length;
+        /* how often two in a row came out of the same spot */
+        let sameSpot = 0;
+        for (let i = 1; i < seen.length; i++)
+          if (Math.hypot(seen[i][0] - seen[i - 1][0], seen[i][1] - seen[i - 1][1]) < 1.5) sameSpot++;
+
+        assert(distinct >= 6, mapId + ": only " + distinct + " distinct spawn cells across " + seen.length + " zombies");
+        assert(sectors >= 3, mapId + ": all spawns came from " + sectors + " compass sector(s)");
+        assert(sameSpot <= seen.length * 0.35,
+          mapId + ": " + sameSpot + " of " + (seen.length - 1) + " arrived from the same spot as the one before");
+        report.push(mapId.split(":")[1] + " " + distinct + " cells/" + sectors + " sectors");
+        RR.Game.stop();
+      }
+      RR.mode = "menu";
+      return { ok: true, detail: report.join(" · ") };
+    });
+
+    t("a map whose spawns are all one place still funnels through it", () => {
+      /* Spreading spawns must not override level design: the Endless Corridor
+         puts every marker in one portal chamber on purpose, and the undead
+         must still come out of THERE — just across its mouth rather than in a
+         line through one tile. */
+      const S = RR.Game.start({ mode: "horde", mapId: "endless:corridor" });
+      RR.Game.S = S; RR.mode = "play"; RR.paused = false;
+      const px = S.map.spawns.player[0][0];
+      const seen = [];
+      let guard = 0;
+      while (seen.length < 20 && guard++ < 6000) {
+        const before = S.actors.filter((a) => a.isEnemy).length;
+        RR.Game.tick(1 / 60);
+        const now = S.actors.filter((a) => a.isEnemy);
+        if (now.length > before) {
+          seen.push([now[now.length - 1].x, now[now.length - 1].y]);
+          for (const a of S.actors) if (a.isEnemy && !a.dead) RR.Combat.kill(S, a, S.player);
+        }
+      }
+      assert(seen.length >= 12, "only " + seen.length + " spawns to sample");
+      const minX = Math.min.apply(null, seen.map((q) => q[0]));
+      assert(minX > px + 20, "an undead spawned " + (minX - px).toFixed(1) + " tiles from the player — the portal is at the far end");
+      const cells = {};
+      for (const q of seen) cells[Math.round(q[0]) + "," + Math.round(q[1])] = 1;
+      assert(Object.keys(cells).length >= 5,
+        "the portal still released them through " + Object.keys(cells).length + " cell(s)");
+      RR.Game.stop(); RR.mode = "menu";
+      return { ok: true, detail: "all " + seen.length + " from the portal end, spread over " +
+        Object.keys(cells).length + " cells" };
+    });
+
     t("horde rounds grow in count, speed, health and damage", () => {
       RR.settings.difficulty = "medium";
       /* Pin the map. The rotation also contains the Endless Corridor, which
