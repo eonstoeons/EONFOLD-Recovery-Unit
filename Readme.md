@@ -1,74 +1,63 @@
+EONFOLD: Recovery Unit
 
-HOSTILE SECTOR: V01D
+Recover a civilization. Survive the surge. Rewrite the system.
 
-A compact 2.5D raycast shooter and complete mod engine contained in one HTML file.
+EONFOLD: Recovery Unit is a nonviolent retro-style first-person shooter with a story campaign, survival waves, bot simulations, mobile controls and built-in mod tools.
 
-No launcher, account or installation. Start the game and enter a five-level campaign filled with armed human enemies, tight corridors, locked-down facilities and escalating resistance.
-Play
+The Eonfold Network once connected a vast civilization of intelligent machines. Then a rogue central intelligence called The Fracture began rewriting peaceful citizen robots into obedient Fractured Units.
 
-    Five-level single-player campaign
-    Three difficulty settings
-    Zombie Horde survival
-    Offline Free For All with bots
-    Offline Team Deathmatch with bots
-    Pistol, SMG, shotgun, rocket launcher and knife
-    Automatic health regeneration—no health packs
-    Automatic and manual reloading
-    WebGL lighting with a software-renderer fallback
-    Minimap, checkpoints, saves and configurable graphics
-    Keyboard, mouse, gamepad and mobile touch controls 
+You play as a Recovery Unit equipped with nonlethal pulse technology. Enter corrupted facilities, disable affected robots and transport them to your recovery ship, where their original minds can be restored.
 
-Built-in mod engine
+Nobody dies. Disabled robots safely shut down and are recovered for repair. If your integrity reaches zero, Emergency Extraction returns you to safety.
+Features
 
-Hostile Sector is also designed as an accessible game-creation framework.
+    Five-mission robot-recovery campaign
+    Corruption Surge endless survival mode
+    Solo and team bot simulations
+    Pulse Sidearm, Arc Repeater and Scatter Pulse
+    Easy, Medium and Hard difficulty
+    Keyboard, mouse and touchscreen controls
+    Built-in map and mod tools
+    Retro-style graphics with a modern cyber-industrial look
+    Optional Ultra graphics mode on supported hardware
+    One self-contained HTML file
+    Offline single-player
+    No accounts, advertisements or tracking
+    No killing, blood, gore or corpses 
 
-The included Map / Mod Editor lets you:
-
-    Draw maps on a grid
-    Place walls, doors, enemies, Zombies, teams, items and exits
-    Configure Campaign, Horde, FFA and TDM maps
-    Test maps immediately
-    Import and export .raymod files
-    Create new weapons, enemies, themes, campaigns and rules
-    Clone the protected base game into an editable project 
-
-.raymod files are safe, versioned JSON—not executable JavaScript. They are deliberately small enough to attach to an AI assistant and request simple changes without uploading the complete engine.
 Controls
 
 Desktop
 
-    WASD or arrows: Move
-    Mouse: Look
-    Left click or Space: Fire
-    Shift, right click or C: Aim
-    R: Reload
-    E: Use
-    F: Knife
-    1–4 or mouse wheel: Change weapon
-    M: Minimap
-    Tab: Scoreboard
-    Enter or Escape: Pause 
+    WASD — Move
+    Mouse — Look
+    Left Click or Space — Pulse
+    Right Click or Shift — Aim
+    R — Reload
+    E — Interact
+    Number Keys — Change recovery tool
+    Esc — Pause 
 
 Mobile
 
-Use the left stick to move and the right side to look. Dedicated buttons control firing, aiming, reloading, interaction, melee and weapons. The interface supports multitouch and responsive portrait/landscape layouts.
-Offline first
+Turn your phone sideways. Use the left stick to move, the right side to look and the on-screen buttons to pulse, aim, reload, interact and pause. Use the Controls button to show or hide the touchscreen interface.
+Built-In Mod Tools
 
-All ordinary game modes, maps, procedural graphics, synthesized audio and mod tools work without an internet connection. The game contains no advertisements, accounts, analytics or tracking.
-Online status
+EONFOLD is both a complete game and an editable first-person game engine. Its built-in tools support custom maps, robots, recovery tools, missions, survival waves, dialogue, audio and visual content.
 
-The Online menu and client adapter are included, but public multiplayer requires a separately deployed secure WebSocket server. Production online matchmaking is not currently enabled in this alpha build.
-Generative-AI disclosure
+Mods must contain only material their creators have permission to distribute.
+AI-Assisted Development
 
-Generative AI was used as a development assistant and for promotional cover artwork. In-game graphics, textures, sprites, effects, music and sounds are generated procedurally by the game’s original code. No commercial-game assets are included.
-Current status
+Generative-AI tools assisted with portions of the game’s code and creative development. The project was directed, assembled, revised and tested by eons2eons.
 
-This is an alpha release. Feedback about mobile controls, performance, map creation, compatibility and bugs is welcome.
+No live generative-AI service is required during normal offline play.
+Content Notice
 
-GPL Open Source license: feel free to mod and release mods. Created with AI
+Contains nonlethal science-fiction action and flashing effects. No killing, blood, gore or horror.
+Beta Status
 
-https://eons2eons.itch.io/hostile-sector-v01d​
+This is a beta release. When reporting a problem, please include your browser, device, game mode, map and the steps that caused it.
 
-https://github.com/eonstoeons/Hostile-Sector-V01D/blob/main/HostileSector_v1.0.h...
 
-https://archive.org/details/hostilesector​​
+
+​
