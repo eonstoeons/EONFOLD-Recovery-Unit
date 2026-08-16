@@ -59,5 +59,20 @@ Beta Status
 This is a beta release. When reporting a problem, please include your browser, device, game mode, map and the steps that caused it.
 
 
-
+Screenshots:
+<img width="1779" height="840" alt="Image" src="https://github.com/user-attachments/assets/3c8d666c-6c3f-4df2-be02-f1955254dd93" />
+<img width="1776" height="843" alt="Image" src="https://github.com/user-attachments/assets/cfc26c8f-1159-4703-8a2d-983321fbb50a" />
+<img width="1854" height="934" alt="Image" src="https://github.com/user-attachments/assets/ca2a9e0b-76fb-4f3e-b49f-18007e6f1734" />
+<img width="1854" height="934" alt="Image" src="https://github.com/user-attachments/assets/6286fd4c-76b4-4642-b103-48616cb96bf5" />
+<img width="1854" height="934" alt="Image" src="https://github.com/user-attachments/assets/094fc072-e1b9-4f23-b113-5650f4a3787e" />
+<img width="1854" height="934" alt="Image" src="https://github.com/user-attachments/assets/cfb24194-87f0-4034-b96a-39480c7b6895" />
+<img width="1854" height="934" alt="Image" src="https://github.com/user-attachments/assets/30df20cb-91dc-4df2-8508-01060ce0622d" />
+<img width="1854" height="934" alt="Image" src="https://github.com/user-attachments/assets/8153cd18-89bc-4f00-b26c-c3d4ba11516b" />
+<img width="1854" height="934" alt="Image" src="https://github.com/user-attachments/assets/ebb73fc3-e688-4f6a-8c7a-b7ac5ba6c6dc" />
+<img width="1854" height="934" alt="Image" src="https://github.com/user-attachments/assets/ff20c48d-20cc-416f-bde2-762c54c22ada" />
+<img width="1854" height="934" alt="Image" src="https://github.com/user-attachments/assets/f81b1f2e-13bb-475a-809d-d21b35d3eabe" />
+<img width="1854" height="934" alt="Image" src="https://github.com/user-attachments/assets/773c57c8-cbe3-43bb-8fb9-e58c831cf7c8" />
+<img width="1854" height="934" alt="Image" src="https://github.com/user-attachments/assets/edaa8911-e3e5-435d-a645-ed2938249af2" />
+<img width="1854" height="934" alt="Image" src="https://github.com/user-attachments/assets/0458342d-b49a-4ffa-ad69-8ecf7e650482" />
+<img width="1854" height="934" alt="Image" src="https://github.com/user-attachments/assets/433b2af5-e750-45a9-9a73-c38b2a46cd17" />
 ​
